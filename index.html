@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MemeBot 🔥 — Auto Meme Machine</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --accent: #ff4d00;
+    --accent2: #ffb800;
+    --text: #f0f0f0;
+    --muted: #888;
+    --success: #00e676;
+    --warning: #ffb800;
+    --danger: #ff1744;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.4;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: rgba(13,13,13,0.95);
+    backdrop-filter: blur(10px);
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .pulse {
+    width: 8px; height: 8px;
+    background: var(--success);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+  }
+
+  main { max-width: 1200px; margin: 0 auto; padding: 40px 24px; }
+
+  /* Stats Row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; line-height: 1; }
+  .stat-sub { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+
+  /* Two Column Layout */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 40px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+  }
+
+  .card-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Trending Topics */
+  .topic-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .topic-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+  }
+
+  .topic-item:hover {
+    border-color: var(--accent);
+    background: rgba(255,77,0,0.05);
+  }
+
+  .topic-rank {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    color: var(--accent);
+    width: 24px;
+  }
+
+  .topic-text { flex: 1; margin: 0 12px; }
+  .topic-use-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .topic-use-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Generate Panel */
+  .input-group { display: flex; flex-direction: column; gap: 12px; }
+
+  .input-field {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  .input-field:focus { border-color: var(--accent); }
+  .input-field::placeholder { color: var(--muted); }
+
+  .btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #ff6b35);
+    color: white;
+  }
+
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(255,77,0,0.3); }
+  .btn-primary:disabled { opacity: 0.5; transform: none; cursor: not-allowed; }
+
+  .btn-secondary {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .btn-secondary:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .btn-success {
+    background: linear-gradient(135deg, #00c853, #00e676);
+    color: #000;
+  }
+
+  .btn-auto {
+    background: linear-gradient(135deg, var(--accent2), #ff8c00);
+    color: #000;
+    font-weight: 700;
+  }
+
+  .btn-auto:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(255,184,0,0.3); }
+
+  /* Meme Preview */
+  .meme-preview {
+    display: none;
+    margin-top: 20px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .meme-preview img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+  }
+
+  .meme-meta {
+    padding: 16px;
+    background: var(--surface2);
+  }
+
+  .meme-caption {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+
+  .meme-tags {
+    font-size: 0.75rem;
+    color: var(--accent);
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  .meme-actions { display: flex; gap: 10px; }
+
+  /* Platform badges */
+  .platform-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+
+  .platform-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+  }
+
+  .badge-success { background: rgba(0,230,118,0.1); border-color: rgba(0,230,118,0.3); color: var(--success); }
+  .badge-pending { background: rgba(255,184,0,0.1); border-color: rgba(255,184,0,0.3); color: var(--accent2); }
+  .badge-failed  { background: rgba(255,23,68,0.1); border-color: rgba(255,23,68,0.3); color: var(--danger); }
+  .badge-skipped { background: rgba(136,136,136,0.1); border-color: rgba(136,136,136,0.3); color: var(--muted); }
+
+  /* History */
+  .history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .history-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s;
+  }
+
+  .history-item:hover { transform: translateY(-2px); border-color: var(--accent); }
+
+  .history-img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+    background: var(--surface2);
+  }
+
+  .history-info { padding: 12px; }
+  .history-caption { font-size: 0.8rem; line-height: 1.4; margin-bottom: 6px; }
+  .history-time { font-size: 0.7rem; color: var(--muted); }
+
+  /* Toast */
+  #toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 0.85rem;
+    z-index: 1000;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s;
+    max-width: 300px;
+  }
+
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.success { border-color: var(--success); color: var(--success); }
+  #toast.error { border-color: var(--danger); color: var(--danger); }
+
+  /* Loader */
+  .loader {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Separator */
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  @media (max-width: 768px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .grid-2 { grid-template-columns: 1fr; }
+    header { padding: 16px 20px; }
+    main { padding: 24px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🔥 MemeBot</div>
+  <div class="status-pill">
+    <div class="pulse"></div>
+    Scheduler Active · 8AM · 1PM · 7PM
+  </div>
+</header>
+
+<main>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Memes Posted</div>
+      <div class="stat-value" id="stat-total">{{ history|length }}</div>
+      <div class="stat-sub">All time</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Today</div>
+      <div class="stat-value" id="stat-today">0</div>
+      <div class="stat-sub">Auto + Manual</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Platforms</div>
+      <div class="stat-value">3</div>
+      <div class="stat-sub">Insta · FB · YouTube</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Auto Schedule</div>
+      <div class="stat-value">3x</div>
+      <div class="stat-sub">Per day</div>
+    </div>
+  </div>
+
+  <!-- Auto Trigger Banner -->
+  <div class="card" style="margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: gap;">
+    <div>
+      <div style="font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 1px;">⚡ FULLY AUTOMATED MODE</div>
+      <div style="font-size: 0.82rem; color: var(--muted); margin-top: 4px;">Scheduler picks trending topics, generates meme, posts to all 3 platforms automatically</div>
+    </div>
+    <button class="btn btn-auto" onclick="triggerAuto()" id="auto-btn" style="white-space: nowrap; margin-top: 0;">
+      🚀 Trigger Now
+    </button>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="grid-2">
+
+    <!-- Trending Topics -->
+    <div class="card">
+      <div class="card-title">📈 Trending Topics</div>
+      <div class="topic-list" id="topic-list">
+        <div style="color: var(--muted); font-size: 0.85rem;">Loading trends...</div>
+      </div>
+      <button class="btn btn-secondary" style="width:100%; margin-top: 16px;" onclick="loadTrending()">
+        🔄 Refresh Trends
+      </button>
+    </div>
+
+    <!-- Manual Generate -->
+    <div class="card">
+      <div class="card-title">🎨 Generate Meme</div>
+      <div class="input-group">
+        <input type="text" id="topic-input" class="input-field" placeholder="Enter topic or click from trends..." />
+        <button class="btn btn-primary" onclick="generateMeme()" id="gen-btn">
+          ✨ Generate Meme
+        </button>
+      </div>
+
+      <!-- Preview -->
+      <div class="meme-preview" id="meme-preview">
+        <img id="preview-img" src="" alt="Generated Meme" />
+        <div class="meme-meta">
+          <div class="meme-caption" id="preview-caption"></div>
+          <div class="meme-tags" id="preview-tags"></div>
+          <div class="meme-actions">
+            <button class="btn btn-success" style="flex:1;" onclick="postMeme()">
+              📤 Post to All Platforms
+            </button>
+          </div>
+          <div class="platform-row" id="post-results"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="section-title">📜 Meme History</div>
+  <div class="history-grid" id="history-grid">
+    {% if history %}
+      {% for item in history %}
+      <div class="history-item">
+        <img class="history-img" src="{{ item.image_url }}" alt="meme" onerror="this.src='https://placehold.co/400x400/1e1e1e/555?text=🔥'" />
+        <div class="history-info">
+          <div class="history-caption">{{ item.caption }}</div>
+          <div class="history-time">{{ item.timestamp[:16].replace('T',' ') }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div style="color: var(--muted); font-size: 0.85rem; grid-column: 1/-1;">No memes yet — generate your first one! 🚀</div>
+    {% endif %}
+  </div>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+  let currentConcept = null;
+  let currentImageUrl = null;
+  let currentTopic = null;
+
+  // Load trending on startup
+  loadTrending();
+  countToday();
+
+  function countToday() {
+    // Count from history items with today's date
+    const today = new Date().toISOString().slice(0,10);
+    const items = document.querySelectorAll('.history-item');
+    // We'll update this after fetching history
+    fetch('/api/history').then(r=>r.json()).then(h => {
+      const todayCount = h.filter(x => x.timestamp && x.timestamp.startsWith(today)).length;
+      document.getElementById('stat-today').textContent = todayCount;
+      document.getElementById('stat-total').textContent = h.length;
+    }).catch(()=>{});
+  }
+
+  async function loadTrending() {
+    const list = document.getElementById('topic-list');
+    list.innerHTML = '<div style="color: var(--muted); font-size: 0.85rem;">Fetching trends...</div>';
+    try {
+      const resp = await fetch('/api/trending');
+      const data = await resp.json();
+      const topics = data.topics || [];
+      if (!topics.length) {
+        list.innerHTML = '<div style="color: var(--muted);">No trends found</div>';
+        return;
+      }
+      list.innerHTML = topics.map((t, i) => `
+        <div class="topic-item">
+          <span class="topic-rank">${i+1}</span>
+          <span class="topic-text">${t}</span>
+          <button class="topic-use-btn" onclick="useTopic('${t.replace(/'/g,"\\'")}')">Use →</button>
+        </div>
+      `).join('');
+    } catch(e) {
+      list.innerHTML = '<div style="color: var(--muted);">Failed to load trends</div>';
+    }
+  }
+
+  function useTopic(topic) {
+    document.getElementById('topic-input').value = topic;
+    document.getElementById('topic-input').focus();
+  }
+
+  async function generateMeme() {
+    const topic = document.getElementById('topic-input').value.trim();
+    if (!topic) { showToast('Please enter or select a topic!', 'error'); return; }
+
+    const btn = document.getElementById('gen-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loader"></span> Generating...';
+    document.getElementById('meme-preview').style.display = 'none';
+    document.getElementById('post-results').innerHTML = '';
+
+    try {
+      const resp = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ topic })
+      });
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error);
+
+      currentConcept = data.concept;
+      currentImageUrl = data.image_url;
+      currentTopic = topic;
+
+      document.getElementById('preview-img').src = data.image_url;
+      document.getElementById('preview-caption').textContent = data.concept.caption;
+      document.getElementById('preview-tags').textContent = data.concept.hashtags;
+      document.getElementById('meme-preview').style.display = 'block';
+      showToast('Meme generated! 🎉', 'success');
+    } catch(e) {
+      showToast('Error: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '✨ Generate Meme';
+    }
+  }
+
+  async function postMeme() {
+    if (!currentImageUrl || !currentConcept) return;
+
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loader"></span> Posting...';
+
+    try {
+      const resp = await fetch('/api/post', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          image_url: currentImageUrl,
+          concept: currentConcept,
+          topic: currentTopic
+        })
+      });
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error);
+
+      const results = data.result || [];
+      const container = document.getElementById('post-results');
+      container.innerHTML = results.map(r => {
+        const cls = r.status === 'success' ? 'badge-success'
+                  : r.status === 'pending' ? 'badge-pending'
+                  : r.status === 'skipped' ? 'badge-skipped'
+                  : 'badge-failed';
+        const icon = r.platform === 'instagram' ? '📸'
+                   : r.platform === 'facebook' ? '👥' : '▶️';
+        return `<span class="platform-badge ${cls}">${icon} ${r.platform} · ${r.status}</span>`;
+      }).join('');
+
+      showToast('Posted successfully! 🚀', 'success');
+      countToday();
+    } catch(e) {
+      showToast('Post error: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '📤 Post to All Platforms';
+    }
+  }
+
+  async function triggerAuto() {
+    const btn = document.getElementById('auto-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loader"></span> Running...';
+
+    try {
+      const resp = await fetch('/api/automate', { method: 'POST' });
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error);
+      showToast('Auto meme job complete! 🤖', 'success');
+      countToday();
+      setTimeout(() => location.reload(), 2000);
+    } catch(e) {
+      showToast('Auto job error: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '🚀 Trigger Now';
+    }
+  }
+
+  function showToast(msg, type='success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `show ${type}`;
+    setTimeout(() => t.className = '', 3500);
+  }
+</script>
+</body>
+</html>
