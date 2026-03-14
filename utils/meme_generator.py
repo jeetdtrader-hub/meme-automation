@@ -2,11 +2,11 @@ import os
 import requests
 import logging
 import json
+import urllib.parse
 
 logger = logging.getLogger(__name__)
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-IDEOGRAM_API_KEY = os.environ.get("IDEOGRAM_API_KEY", "")
 
 
 def generate_meme_concept(topic: str) -> dict:
@@ -21,7 +21,7 @@ Topic: {topic}
 Respond ONLY with a JSON object, no markdown, no explanation:
 {{
   "caption": "The funny meme caption (Hindi/Hinglish/English, max 2 lines)",
-  "image_prompt": "Detailed prompt for AI image generation - cartoon/illustration style, funny Indian character, describe the scene clearly",
+  "image_prompt": "Detailed prompt for AI image generation - cartoon/illustration style, funny Indian character, describe the scene clearly, keep under 200 characters",
   "hashtags": "#meme #india #trending (relevant hashtags, 10-15)",
   "platform_caption": "Full Instagram/Facebook caption with caption + hashtags"
 }}"""
@@ -52,45 +52,25 @@ Respond ONLY with a JSON object, no markdown, no explanation:
 
 
 def generate_meme_image(concept: dict) -> str:
-    """Generate cartoon meme image using Ideogram API."""
-    if not IDEOGRAM_API_KEY:
-        logger.warning("IDEOGRAM_API_KEY not set, returning placeholder")
-        return "https://placehold.co/1080x1080/FF6B35/white?text=Meme+Coming+Soon"
-
-    image_prompt = concept.get("image_prompt", "")
+    """Generate cartoon meme image using Pollinations.ai (FREE, no API key needed)."""
+    
+    image_prompt = concept.get("image_prompt", "funny Indian cartoon meme")
     caption = concept.get("caption", "")
 
-    # Enhance prompt for better meme style
+    # Build enhanced prompt for cartoon meme style
     full_prompt = (
-        f"{image_prompt}. "
-        f"Caption text on image: '{caption}'. "
-        f"Style: Indian cartoon illustration, funny and expressive characters, "
-        f"bold text overlay, vibrant colors, meme format, high quality, 1:1 ratio"
+        f"{image_prompt}, "
+        f"funny Indian cartoon illustration style, "
+        f"vibrant colors, expressive characters, meme format, "
+        f"bold clean composition, high quality digital art"
     )
 
-    try:
-        response = requests.post(
-            "https://api.ideogram.ai/generate",
-            headers={
-                "Api-Key": IDEOGRAM_API_KEY,
-                "Content-Type": "application/json"
-            },
-            json={
-                "image_request": {
-                    "prompt": full_prompt,
-                    "aspect_ratio": "ASPECT_1_1",
-                    "model": "V_2",
-                    "style_type": "ILLUSTRATION",
-                    "magic_prompt_option": "ON"
-                }
-            },
-            timeout=60
-        )
-        response.raise_for_status()
-        data = response.json()
-        image_url = data["data"][0]["url"]
-        logger.info(f"✅ Meme image generated: {image_url}")
-        return image_url
-    except Exception as e:
-        logger.error(f"Ideogram API error: {e}")
-        return "https://placehold.co/1080x1080/FF6B35/white?text=Meme+Coming+Soon"
+    # URL encode the prompt
+    encoded_prompt = urllib.parse.quote(full_prompt)
+    
+    # Pollinations.ai free image generation URL
+    # width=1024, height=1024 for square meme format
+    image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=1024&model=flux&nologo=true&enhance=true"
+    
+    logger.info(f"✅ Meme image URL generated via Pollinations.ai")
+    return image_url
