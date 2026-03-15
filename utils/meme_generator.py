@@ -26,7 +26,6 @@ def generate_meme_concept(topic: str) -> dict:
             "generationConfig": {
                 "temperature": 0.5,
                 "maxOutputTokens": 200,
-                "responseMimeType": "application/json"
             }
         },
         timeout=30
