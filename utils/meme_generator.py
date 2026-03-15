@@ -29,7 +29,7 @@ Use only simple ASCII characters in the JSON. No special quotes or unicode punct
   "platform_caption": "full caption with hashtags here"
 }}"""
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent?key={GEMINI_API_KEY}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
 
     response = requests.post(
         url,
