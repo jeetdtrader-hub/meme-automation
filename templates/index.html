@@ -579,7 +579,16 @@
       currentImageUrl = data.image_url;
       currentTopic = topic;
 
-      document.getElementById('preview-img').src = data.image_url;
+      const img = document.getElementById('preview-img');
+img.src = data.image_url;
+img.style.background = '#1e1e1e';
+img.alt = 'Loading image...';
+img.onerror = function() {
+    this.style.display = 'none';
+    this.parentElement.insertAdjacentHTML('afterbegin', 
+        '<a href="' + data.image_url + '" target="_blank" style="display:block;padding:20px;color:#FF6B35;text-align:center;font-size:14px;">🖼️ Tap here to view generated meme image</a>'
+    );
+};
       document.getElementById('preview-caption').textContent = data.concept.caption;
       document.getElementById('preview-tags').textContent = data.concept.hashtags;
       document.getElementById('meme-preview').style.display = 'block';
