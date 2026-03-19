@@ -72,7 +72,7 @@ def generate_meme_image(concept: dict) -> str:
     )
 
     encoded_prompt = urllib.parse.quote(full_prompt)
-    image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=1024&model=flux&nologo=true"
+    image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=1024&model=turbo&nologo=true"
 
     logger.info(f"✅ Meme image URL generated via Pollinations.ai")
     return image_url
